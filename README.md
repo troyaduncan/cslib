@@ -2,6 +2,24 @@
 
 A comprehensive Node.js + TypeScript library for integrating with T-Mobile's backend telecom systems, including AIR (Ericsson charging system), SDP (Service Data Point), and account management.
 
+## 🎨 GUI Testing Dashboard
+
+A **beautiful web-based GUI** is included for testing all API functionality! Simply run:
+
+```bash
+npm run demo
+```
+
+Then open your browser to **http://localhost:3000** to access the interactive testing dashboard.
+
+The GUI provides:
+- ✅ **Tab-based interface** for different services (AIR, Account Finder, Definitions, Statistics)
+- ✅ **Pre-filled test data** for quick testing
+- ✅ **Real-time API responses** with formatted JSON
+- ✅ **Beautiful gradient design** with responsive layout
+- ✅ **No database required** - uses mock data
+- ✅ **Live status indicator**
+
 ## Features
 
 - **AIR Module**: Integration with Ericsson AIR charging system using UCIP protocol

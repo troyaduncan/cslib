@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSLib API Testing Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            background: #10b981;
+            color: white;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .card h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 600;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .response-container {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .response-container h4 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .response-container pre {
+            background: #1e293b;
+            color: #10b981;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error {
+            color: #ef4444;
+            background: #fee2e2;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+        .success {
+            color: #10b981;
+            background: #d1fae5;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #667eea;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 CSLib API Testing Dashboard</h1>
+            <p>T-Mobile Charging System Integration Library</p>
+            <span class="status-badge" id="status">Checking Status...</span>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('air')">AIR Services</button>
+            <button class="tab" onclick="switchTab('account')">Account Finder</button>
+            <button class="tab" onclick="switchTab('definitions')">Definitions</button>
+            <button class="tab" onclick="switchTab('stats')">Statistics</button>
+        </div>
+
+        <!-- AIR Services Tab -->
+        <div id="air-tab" class="tab-content active">
+            <div class="grid">
+                <!-- Get Balance -->
+                <div class="card">
+                    <h3>💰 Get Balance</h3>
+                    <div class="form-group">
+                        <label>Subscriber Number:</label>
+                        <input type="text" id="balance-msisdn" value="1234567890" placeholder="Enter MSISDN">
+                    </div>
+                    <button onclick="getBalance()">Get Balance</button>
+                    <div id="balance-response" class="response-container" style="display:none;"></div>
+                </div>
+
+                <!-- Refill Account -->
+                <div class="card">
+                    <h3>🔄 Refill Account</h3>
+                    <div class="form-group">
+                        <label>Subscriber Number:</label>
+                        <input type="text" id="refill-msisdn" value="1234567890" placeholder="Enter MSISDN">
+                    </div>
+                    <div class="form-group">
+                        <label>Refill Amount:</label>
+                        <input type="number" id="refill-amount" value="1000" placeholder="Enter amount">
+                    </div>
+                    <button onclick="refillAccount()">Refill Account</button>
+                    <div id="refill-response" class="response-container" style="display:none;"></div>
+                </div>
+
+                <!-- Get Account Details -->
+                <div class="card">
+                    <h3>📋 Account Details</h3>
+                    <div class="form-group">
+                        <label>Subscriber Number:</label>
+                        <input type="text" id="details-msisdn" value="1234567890" placeholder="Enter MSISDN">
+                    </div>
+                    <button onclick="getAccountDetails()">Get Details</button>
+                    <div id="details-response" class="response-container" style="display:none;"></div>
+                </div>
+
+                <!-- Update Balance -->
+                <div class="card">
+                    <h3>⚡ Update Balance</h3>
+                    <div class="form-group">
+                        <label>Subscriber Number:</label>
+                        <input type="text" id="update-msisdn" value="1234567890" placeholder="Enter MSISDN">
+                    </div>
+                    <div class="form-group">
+                        <label>Adjustment Amount:</label>
+                        <input type="number" id="adjustment-amount" value="500" placeholder="Enter amount">
+                    </div>
+                    <button onclick="updateBalance()">Update Balance</button>
+                    <div id="update-response" class="response-container" style="display:none;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Account Finder Tab -->
+        <div id="account-tab" class="tab-content">
+            <div class="grid">
+                <!-- Locate Single Account -->
+                <div class="card">
+                    <h3>🔍 Locate Account</h3>
+                    <div class="form-group">
+                        <label>MSISDN:</label>
+                        <input type="text" id="locate-msisdn" value="9876543210" placeholder="Enter MSISDN">
+                    </div>
+                    <button onclick="locateAccount()">Locate Account</button>
+                    <div id="locate-response" class="response-container" style="display:none;"></div>
+                </div>
+
+                <!-- Batch Locate Accounts -->
+                <div class="card">
+                    <h3>🔍 Batch Locate Accounts</h3>
+                    <div class="form-group">
+                        <label>MSISDNs (comma-separated):</label>
+                        <input type="text" id="batch-msisdns" value="1234567890,9876543210,5555555555"
+                               placeholder="Enter MSISDNs separated by commas">
+                    </div>
+                    <button onclick="locateBatch()">Locate Batch</button>
+                    <div id="batch-response" class="response-container" style="display:none;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Definitions Tab -->
+        <div id="definitions-tab" class="tab-content">
+            <div class="grid">
+                <!-- Get Offers -->
+                <div class="card">
+                    <h3>🎁 Offers</h3>
+                    <button onclick="getOffers()">Get All Offers</button>
+                    <div id="offers-response" class="response-container" style="display:none;"></div>
+                </div>
+
+                <!-- Get Counters -->
+                <div class="card">
+                    <h3>📊 Counters</h3>
+                    <button onclick="getCounters()">Get All Counters</button>
+                    <div id="counters-response" class="response-container" style="display:none;"></div>
+                </div>
+
+                <!-- Get AIR Nodes -->
+                <div class="card">
+                    <h3>🖥️ AIR Nodes</h3>
+                    <button onclick="getAirNodes()">Get AIR Nodes</button>
+                    <div id="nodes-response" class="response-container" style="display:none;"></div>
+                </div>
+
+                <!-- Get Service Classes -->
+                <div class="card">
+                    <h3>🏷️ Service Classes</h3>
+                    <button onclick="getServiceClasses()">Get Service Classes</button>
+                    <div id="classes-response" class="response-container" style="display:none;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Tab -->
+        <div id="stats-tab" class="tab-content">
+            <div class="grid">
+                <!-- AIR Statistics -->
+                <div class="card">
+                    <h3>📈 AIR Statistics</h3>
+                    <button onclick="getAirStats()">Get AIR Stats</button>
+                    <div id="air-stats-response" class="response-container" style="display:none;"></div>
+                </div>
+
+                <!-- Definition Statistics -->
+                <div class="card">
+                    <h3>📊 Definition Statistics</h3>
+                    <button onclick="getDefStats()">Get Definition Stats</button>
+                    <div id="def-stats-response" class="response-container" style="display:none;"></div>
+                </div>
+
+                <!-- System Health -->
+                <div class="card">
+                    <h3>💚 System Health</h3>
+                    <button onclick="checkHealth()">Check Health</button>
+                    <div id="health-response" class="response-container" style="display:none;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Check status on load
+        window.onload = () => {
+            checkHealth().then(() => {
+                document.getElementById('status').textContent = '✅ Server Running';
+                document.getElementById('status').style.background = '#10b981';
+            }).catch(() => {
+                document.getElementById('status').textContent = '❌ Server Offline';
+                document.getElementById('status').style.background = '#ef4444';
+            });
+        };
+
+        // Tab switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            event.target.classList.add('active');
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+        }
+
+        // Utility function to make API calls
+        async function apiCall(url, method = 'GET', body = null) {
+            const options = {
+                method,
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            };
+            if (body) {
+                options.body = JSON.stringify(body);
+            }
+            const response = await fetch(url, options);
+            return await response.json();
+        }
+
+        // Display response
+        function displayResponse(elementId, data) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.innerHTML = `
+                <h4>Response:</h4>
+                <pre>${JSON.stringify(data, null, 2)}</pre>
+            `;
+        }
+
+        // AIR Services
+        async function getBalance() {
+            const msisdn = document.getElementById('balance-msisdn').value;
+            try {
+                const data = await apiCall('/api/air/balance', 'POST', { subscriberNumber: msisdn });
+                displayResponse('balance-response', data);
+            } catch (error) {
+                displayResponse('balance-response', { error: error.message });
+            }
+        }
+
+        async function refillAccount() {
+            const msisdn = document.getElementById('refill-msisdn').value;
+            const amount = parseFloat(document.getElementById('refill-amount').value);
+            try {
+                const data = await apiCall('/api/air/refill', 'POST', {
+                    subscriberNumber: msisdn,
+                    refillAmount: amount
+                });
+                displayResponse('refill-response', data);
+            } catch (error) {
+                displayResponse('refill-response', { error: error.message });
+            }
+        }
+
+        async function getAccountDetails() {
+            const msisdn = document.getElementById('details-msisdn').value;
+            try {
+                const data = await apiCall('/api/air/account-details', 'POST', { subscriberNumber: msisdn });
+                displayResponse('details-response', data);
+            } catch (error) {
+                displayResponse('details-response', { error: error.message });
+            }
+        }
+
+        async function updateBalance() {
+            const msisdn = document.getElementById('update-msisdn').value;
+            const amount = parseFloat(document.getElementById('adjustment-amount').value);
+            try {
+                const data = await apiCall('/api/air/update-balance', 'POST', {
+                    subscriberNumber: msisdn,
+                    adjustmentAmount: amount
+                });
+                displayResponse('update-response', data);
+            } catch (error) {
+                displayResponse('update-response', { error: error.message });
+            }
+        }
+
+        // Account Finder
+        async function locateAccount() {
+            const msisdn = document.getElementById('locate-msisdn').value;
+            try {
+                const data = await apiCall('/api/account/locate', 'POST', { msisdn });
+                displayResponse('locate-response', data);
+            } catch (error) {
+                displayResponse('locate-response', { error: error.message });
+            }
+        }
+
+        async function locateBatch() {
+            const msisdns = document.getElementById('batch-msisdns').value.split(',').map(m => m.trim());
+            try {
+                const data = await apiCall('/api/account/locate-batch', 'POST', { msisdns });
+                displayResponse('batch-response', data);
+            } catch (error) {
+                displayResponse('batch-response', { error: error.message });
+            }
+        }
+
+        // Definitions
+        async function getOffers() {
+            try {
+                const data = await apiCall('/api/definitions/offers');
+                displayResponse('offers-response', data);
+            } catch (error) {
+                displayResponse('offers-response', { error: error.message });
+            }
+        }
+
+        async function getCounters() {
+            try {
+                const data = await apiCall('/api/definitions/counters');
+                displayResponse('counters-response', data);
+            } catch (error) {
+                displayResponse('counters-response', { error: error.message });
+            }
+        }
+
+        async function getAirNodes() {
+            try {
+                const data = await apiCall('/api/definitions/air-nodes');
+                displayResponse('nodes-response', data);
+            } catch (error) {
+                displayResponse('nodes-response', { error: error.message });
+            }
+        }
+
+        async function getServiceClasses() {
+            try {
+                const data = await apiCall('/api/definitions/service-classes');
+                displayResponse('classes-response', data);
+            } catch (error) {
+                displayResponse('classes-response', { error: error.message });
+            }
+        }
+
+        // Statistics
+        async function getAirStats() {
+            try {
+                const data = await apiCall('/api/air/stats');
+                displayResponse('air-stats-response', data);
+            } catch (error) {
+                displayResponse('air-stats-response', { error: error.message });
+            }
+        }
+
+        async function getDefStats() {
+            try {
+                const data = await apiCall('/api/definitions/stats');
+                displayResponse('def-stats-response', data);
+            } catch (error) {
+                displayResponse('def-stats-response', { error: error.message });
+            }
+        }
+
+        async function checkHealth() {
+            try {
+                const data = await apiCall('/api/health');
+                displayResponse('health-response', data);
+                return data;
+            } catch (error) {
+                displayResponse('health-response', { error: error.message });
+                throw error;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -8,12 +8,15 @@ import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
+import path from 'path';
 import { config } from '../config';
 
 const app: Application = express();
 
-// Security middleware
-app.use(helmet());
+// Security middleware - disable CSP for demo
+app.use(helmet({
+  contentSecurityPolicy: false,
+}));
 
 // CORS middleware
 app.use(cors({
@@ -29,22 +32,18 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Compression middleware
 app.use(compression());
 
+// Serve static files from public directory
+app.use(express.static(path.join(__dirname, 'public')));
+
 // Request logging middleware
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
   next();
 });
 
-// Root endpoint
+// Root endpoint - redirect to GUI
 app.get('/', (req: Request, res: Response) => {
-  res.json({
-    name: 'CSLib API Server (Demo Mode)',
-    version: '1.0.0',
-    description: 'T-Mobile Charging System Integration Library',
-    environment: config.environment,
-    mode: 'DEMO - Database not connected',
-    status: 'Running',
-  });
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Health check
@@ -108,6 +107,22 @@ app.post('/api/air/account-details', (req: Request, res: Response) => {
         ],
       },
       message: 'DEMO: Mock account details response',
+    },
+  });
+});
+
+app.post('/api/air/update-balance', (req: Request, res: Response) => {
+  res.json({
+    success: true,
+    data: {
+      responseCode: 0,
+      data: {
+        subscriberNumber: req.body.subscriberNumber || '1234567890',
+        adjustmentAmount: req.body.adjustmentAmount || 0,
+        newBalance: 10500,
+        transactionId: `TXN${Date.now()}`,
+      },
+      message: 'DEMO: Mock balance update response',
     },
   });
 });
@@ -223,6 +238,29 @@ app.get('/api/definitions/air-nodes', (req: Request, res: Response) => {
   });
 });
 
+app.get('/api/definitions/service-classes', (req: Request, res: Response) => {
+  res.json({
+    success: true,
+    data: [
+      {
+        serviceClassId: 'SC001',
+        serviceClassName: 'Premium Service',
+        description: 'Premium tier service class',
+        priority: 1,
+        active: true,
+      },
+      {
+        serviceClassId: 'SC002',
+        serviceClassName: 'Standard Service',
+        description: 'Standard tier service class',
+        priority: 2,
+        active: true,
+      },
+    ],
+    message: 'DEMO: Mock service classes',
+  });
+});
+
 app.get('/api/definitions/stats', (req: Request, res: Response) => {
   res.json({
     success: true,
@@ -271,14 +309,18 @@ app.listen(PORT, HOST, () => {
   console.log('╠════════════════════════════════════════════════════════════╣');
   console.log(`║  Status: Running                                           ║`);
   console.log(`║  URL: http://${HOST}:${PORT.toString().padEnd(45)}║`);
+  console.log(`║  GUI Dashboard: http://${HOST}:${PORT.toString().padEnd(33)}║`);
   console.log(`║  Environment: ${config.environment.padEnd(45)}║`);
   console.log(`║  Mode: DEMO (No database required)                         ║`);
   console.log('╠════════════════════════════════════════════════════════════╣');
+  console.log('║  🎨 Open your browser to test all API functionality!       ║');
+  console.log('║                                                            ║');
   console.log('║  Available Endpoints:                                      ║');
-  console.log('║    GET  /                     - Server info                ║');
+  console.log('║    GET  /                     - Testing Dashboard (GUI)    ║');
   console.log('║    GET  /api/health           - Health check               ║');
   console.log('║    POST /api/air/balance      - Get balance (mock)         ║');
   console.log('║    POST /api/air/refill       - Refill (mock)              ║');
+  console.log('║    POST /api/air/update-balance - Update balance (mock)    ║');
   console.log('║    POST /api/air/account-details - Account details (mock)  ║');
   console.log('║    GET  /api/air/stats        - AIR stats (mock)           ║');
   console.log('║    POST /api/account/locate   - Locate account (mock)      ║');
